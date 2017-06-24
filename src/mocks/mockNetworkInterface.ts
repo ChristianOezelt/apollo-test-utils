@@ -6,6 +6,10 @@ import {
 } from 'apollo-client/transport/networkInterface';
 
 import {
+  addTypenameToDocument,
+} from 'apollo-client';
+
+import {
   ExecutionResult,
   DocumentNode,
   print,
@@ -35,6 +39,7 @@ export interface ParsedRequest {
   variables?: Object;
   query?: DocumentNode;
   debugName?: string;
+  addTypeName?: boolean;
 }
 
 export interface MockedResponse {
@@ -193,9 +198,11 @@ extends MockNetworkInterface implements BatchedNetworkInterface {
   }
 }
 
-
 function requestToKey(request: ParsedRequest): string {
-  const queryString = request.query && print(request.query);
+  const query = request.addTypeName
+    ? addTypenameToDocument( request.query )
+    : request.query;
+  const queryString = query && print(query);
 
   return JSON.stringify({
     variables: request.variables || {},

@@ -1,4 +1,4 @@
-import { omit } from 'lodash';
+import { omit, keys } from 'lodash';
 import { assert } from 'chai';
 
 import gql from 'graphql-tag';
@@ -6,6 +6,8 @@ import gql from 'graphql-tag';
 import {
   mockSubscriptionNetworkInterface,
   MockedSubscription,
+  mockNetworkInterface,
+  MockedResponse,
 } from '../src';
 
 describe('MockSubscriptionNetworkInterface', () => {
@@ -233,5 +235,46 @@ describe('MockSubscriptionNetworkInterface', () => {
     assert.throw(() => {
       networkInterface.fireResult(0);
     });
+  });
+});
+
+describe('mockNetworkInterace', () => {
+  const query = gql`
+      query UserInfo($name: String) {
+        user(name: $name) {
+          name
+        }
+      }`;
+  it( 'should not add typenames to queries when addTypeName option is false (/undefined)', () => {
+    const queryMock: MockedResponse = {
+      request: {
+        query: query,
+        variables: {
+          name: 'Edward Elric',
+        },
+      },
+      result: [],
+    };
+    const mockedNetworkInterface = mockNetworkInterface( queryMock );
+    const keysOfMockedResponses = keys(mockedNetworkInterface.mockedResponsesByKey );
+    assert.lengthOf( keysOfMockedResponses, 1 );
+    assert.notMatch(keysOfMockedResponses[0], /\_\_typename/g );
+  });
+
+  it( 'should add typenames to queries when addTypeName option is true', () => {
+    const queryMock: MockedResponse = {
+      request: {
+        query: query,
+        variables: {
+          name: 'Alphonse Elric',
+        },
+        addTypeName: true,
+      },
+      result: [],
+    };
+    const mockedNetworkInterface = mockNetworkInterface(queryMock);
+    const keysOfMockedResponses = keys(mockedNetworkInterface.mockedResponsesByKey);
+    assert.lengthOf(keysOfMockedResponses, 1);
+    assert.match(keysOfMockedResponses[0], /\_\_typename/g);
   });
 });
